@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WorkloadIQ – Infosys Productivity Agent</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f7fb;--card:#fff;--tx:#1a2033;--mu:#667089;--bd:#e2e6f0;--ac:#2f5bea;--rd:#d93a4a;--am:#d98a0b;--gn:#1c9a5b}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1320;--card:#181d30;--tx:#e8ebf5;--mu:#98a2c0;--bd:#2a3150;--ac:#7a9bff;--rd:#ff6b78;--am:#f2b04a;--gn:#4cd08d;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1320;--card:#181d30;--tx:#e8ebf5;--mu:#98a2c0;--bd:#2a3150;--ac:#7a9bff;--rd:#ff6b78;--am:#f2b04a;--gn:#4cd08d;color-scheme:dark}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.w{max-width:1100px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:26px;margin:0 0 4px}h2{font-size:17px;margin:0 0 10px}
+.mu{color:var(--mu)}.sub{margin:0 0 18px}
+.grid{display:grid;gap:14px}.k{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}.two{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:14px}
+.kv{font-size:28px;font-weight:700}.tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600;color:#fff}
+.hi{background:var(--rd)}.md{background:var(--am)}.lo{background:var(--gn)}
+.sc{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:640px}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--bd);font-size:14px}th{color:var(--mu);font-weight:600}
+tr.t{cursor:pointer}tr.t:hover,tr.sel{background:color-mix(in srgb,var(--ac) 10%,transparent)}
+ol.al{padding-left:20px;margin:0}ol.al li{margin-bottom:8px}
+button{font:inherit;border:1px solid var(--bd);background:var(--card);color:var(--tx);padding:7px 12px;border-radius:8px;cursor:pointer}
+button:hover{border-color:var(--ac)}
+.ag{background:color-mix(in srgb,var(--ac) 8%,var(--card));border-radius:10px;padding:12px;margin-top:10px;white-space:pre-wrap;min-height:60px}
+input[type=range]{width:100%}svg{width:100%;height:auto;display:block}
+.bar{height:8px;border-radius:4px;background:var(--bd);overflow:hidden}.bar i{display:block;height:100%;background:var(--ac)}
+code{background:var(--bd);padding:1px 6px;border-radius:4px;font-size:13px}
+</style></head><body><div class="w">
+<h1>🧭 WorkloadIQ</h1>
+<p class="mu sub">AI agent for Infosys-style delivery units: why are hours rising while productivity falls? (Synthetic illustrative data – not real Infosys figures.)</p>
+
+<div class="grid k" id="kpis"></div>
+
+<div class="grid two" style="margin-top:14px">
+<div class="c"><h2>Company trend: hours vs. output per hour (12 weeks)</h2><svg id="trend" viewBox="0 0 520 220"></svg><div class="mu" id="corr"></div></div>
+<div class="c"><h2>Agent: ask</h2>
+<div style="display:flex;gap:8px;flex-wrap:wrap"><button data-q="risk">Who is at risk?</button><button data-q="bn">Top bottleneck</button><button data-q="plan">Action plan</button></div>
+<div class="ag" id="agent">Select a question. The agent reasons over the scores computed below.</div></div>
+</div>
+
+<div class="c sc"><h2>Team analysis (click a row)</h2><table id="tbl"></table></div>
+
+<div class="grid two">
+<div class="c"><h2 id="dt">Team detail</h2><div id="detail"></div></div>
+<div class="c"><h2>What-if: workload intervention</h2>
+<div class="mu">Cut overtime by <b id="ov">0</b>% and rebalance tasks for <b id="tn"></b></div>
+<input type="range" id="sl" min="0" max="60" value="25"><div id="wi"></div></div>
+</div>
+
+<div class="c"><h2>Algorithm used by the agent</h2><ol class="al">
+<li><b>Ingest</b> weekly HR + project data per team: hours, overtime, absenteeism, tasks assigned/completed, engagement (1–10), performance (1–5).</li>
+<li><b>Normalize</b> each metric to 0–100 using min–max across teams.</li>
+<li><b>Workload Pressure Index</b> <code>WPI = 0.35·hours + 0.35·overtime + 0.30·tasks per head</code>.</li>
+<li><b>Output Efficiency</b> <code>OE = 0.45·completion + 0.30·performance + 0.25·engagement</code>.</li>
+<li><b>Burnout Risk</b> <code>BR = 0.4·WPI + 0.3·(100−engagement) + 0.3·absenteeism</code>.</li>
+<li><b>Productivity per hour</b> <code>PPH = completion ÷ hours</code>; compute Pearson correlation of hours vs. PPH over time (negative = diminishing returns).</li>
+<li><b>Bottleneck classification</b>: overload (WPI high, OE low), under-capacity (tasks/head high, hours moderate), disengagement (engagement low, workload normal), attendance strain (absenteeism high), healthy otherwise.</li>
+<li><b>Recommend</b> interventions from a rule library, rank by BR, and simulate impact with a regression-style gain: each 10% overtime cut recovers ≈ 3% OE for overloaded teams.</li>
+</ol></div>
+</div>
+<script>
+const T=[
+{n:"Banking Platform",h:50,o:11,a:7.5,tc:68,e:4.6,p:3.0,hc:42,t:9.2},
+{n:"Retail Cloud Migration",h:47,o:8,a:5.5,tc:74,e:5.8,p:3.3,hc:35,t:8.1},
+{n:"Telecom Support Ops",h:46,o:6,a:8.8,tc:71,e:5.0,p:3.1,hc:60,t:6.5},
+{n:"Healthcare Analytics",h:43,o:4,a:3.2,tc:86,e:7.4,p:4.0,hc:28,t:6.0},
+{n:"Insurance QA",h:48,o:9,a:6.0,tc:72,e:4.9,p:3.2,hc:24,t:8.8},
+{n:"Data Engineering",h:44,o:5,a:3.8,tc:84,e:7.0,p:3.9,hc:30,t:6.4},
+{n:"Digital Experience",h:42,o:3,a:4.1,tc:80,e:5.1,p:3.5,hc:22,t:5.2},
+{n:"Cybersecurity",h:45,o:6,a:3.0,tc:88,e:7.8,p:4.2,hc:18,t:6.8}];
+const K=["h","o","a","tc","e","p","t"];
+const mm={};K.forEach(k=>{const v=T.map(x=>x[k]);mm[k]=[Math.min(...v),Math.max(...v)]});
+const nz=(k,v)=>100*(v-mm[k][0])/(mm[k][1]-mm[k][0]||1);
+T.forEach(x=>{
+ const N={};K.forEach(k=>N[k]=nz(k,x[k]));
+ x.WPI=.35*N.h+.35*N.o+.30*N.t;
+ x.OE=.45*N.tc+.30*N.p+.25*N.e;
+ x.BR=.4*x.WPI+.3*(100-N.e)+.3*N.a;
+ x.PPH=x.tc/x.h;
+ if(x.WPI>60&&x.OE<45){x.bn="Overload";x.iv=["Cap overtime at 4 h/week","Freeze new scope until backlog drops","Add 2–3 contractors for peak sprints","Weekly workload review with the delivery manager"]}
+ else if(x.t>8&&x.OE<50){x.bn="Under-capacity";x.iv=["Rebalance tasks to teams with spare capacity","Backfill open roles","Automate repetitive tickets"]}
+ else if(N.e<30){x.bn="Disengagement";x.iv=["Skip-level 1:1s and recognition","Career-path and learning plan","Review role clarity and manager fit"]}
+ else if(N.a>65){x.bn="Attendance strain";x.iv=["Shift-roster redesign","Wellness and leave-planning support","Investigate root causes of absences"]}
+ else{x.bn="Healthy";x.iv=["Maintain current practices","Share playbook with higher-risk teams"]}
+ x.lv=x.BR>60?"hi":x.BR>40?"md":"lo";
+});
+const sorted=[...T].sort((a,b)=>b.BR-a.BR);
+// weekly company trend
+const wk=[];for(let i=0;i<12;i++){const h=41+i*.72+((i*7)%3)*.3;const pph=(2.0-i*.035)+(((i*5)%4)-1.5)*.02;wk.push([h,pph])}
+function pear(a,b){const n=a.length,ma=a.reduce((s,v)=>s+v,0)/n,mb=b.reduce((s,v)=>s+v,0)/n;let c=0,x=0,y=0;for(let i=0;i<n;i++){c+=(a[i]-ma)*(b[i]-mb);x+=(a[i]-ma)**2;y+=(b[i]-mb)**2}return c/Math.sqrt(x*y)}
+const r=pear(wk.map(w=>w[0]),wk.map(w=>w[1]));
+const avg=k=>(T.reduce((s,x)=>s+x[k],0)/T.length);
+document.getElementById("kpis").innerHTML=[
+["Avg weekly hours",avg("h").toFixed(1)+" h"],["Avg overtime",avg("o").toFixed(1)+" h"],["Avg absenteeism",avg("a").toFixed(1)+"%"],["Teams at high risk",T.filter(x=>x.lv=="hi").length+" of "+T.length]
+].map(k=>`<div class="c" style="margin:0"><div class="mu">${k[0]}</div><div class="kv">${k[1]}</div></div>`).join("");
+// trend chart
+(function(){const s=document.getElementById("trend"),W=520,H=220,P=34;
+const hs=wk.map(w=>w[0]),ps=wk.map(w=>w[1]);
+const sc=(v,a,b,lo,hi)=>lo+(v-a)/(b-a)*(hi-lo);
+const hx=i=>P+i*(W-2*P)/11;
+const hy=v=>sc(v,38,52,H-P,P),py=v=>sc(v,1.5,2.1,H-P,P);
+const pl=(arr,f)=>arr.map((v,i)=>(i?"L":"M")+hx(i).toFixed(1)+" "+f(v).toFixed(1)).join("");
+s.innerHTML=`<path d="${pl(hs,hy)}" fill="none" stroke="var(--am)" stroke-width="2.5"/><path d="${pl(ps,py)}" fill="none" stroke="var(--ac)" stroke-width="2.5"/>
+<text x="${P}" y="14" fill="var(--am)" font-size="12">Hours/week ↑</text><text x="${P+110}" y="14" fill="var(--ac)" font-size="12">Output per hour ↓</text>
+<text x="${P}" y="${H-8}" fill="var(--mu)" font-size="11">Week 1</text><text x="${W-P-40}" y="${H-8}" fill="var(--mu)" font-size="11">Week 12</text>`})();
+document.getElementById("corr").innerHTML=`Correlation (hours vs. output/hour): <b>${r.toFixed(2)}</b> – ${r<-.5?"strong diminishing returns: extra hours are not producing extra output.":"weak relationship."}`;
+// table
+const tb=document.getElementById("tbl");
+tb.innerHTML="<tr><th>Team</th><th>Hours</th><th>OT</th><th>Absent</th><th>Done%</th><th>Engage</th><th>WPI</th><th>OE</th><th>Burnout</th><th>Bottleneck</th></tr>"+
+sorted.map(x=>`<tr class="t" data-n="${x.n}"><td>${x.n}</td><td>${x.h}</td><td>${x.o}</td><td>${x.a}%</td><td>${x.tc}</td><td>${x.e}</td><td>${x.WPI.toFixed(0)}</td><td>${x.OE.toFixed(0)}</td><td><span class="tag ${x.lv}">${x.BR.toFixed(0)}</span></td><td>${x.bn}</td></tr>`).join("");
+let cur=sorted[0];
+function show(x){cur=x;
+ document.querySelectorAll("tr.t").forEach(t=>t.classList.toggle("sel",t.dataset.n==x.n));
+ document.getElementById("dt").textContent=x.n+" – "+x.bn;
+ const b=(l,v)=>`<div style="margin:6px 0"><div style="display:flex;justify-content:space-between"><span>${l}</span><b>${v.toFixed(0)}/100</b></div><div class="bar"><i style="width:${v}%"></i></div></div>`;
+ document.getElementById("detail").innerHTML=b("Workload pressure",x.WPI)+b("Output efficiency",x.OE)+b("Burnout risk",x.BR)+
+ `<div style="margin-top:10px"><b>Recommended interventions</b><ul>${x.iv.map(i=>`<li>${i}</li>`).join("")}</ul></div>`;
+ document.getElementById("tn").textContent=x.n;upd()}
+function upd(){const p=+document.getElementById("sl").value;document.getElementById("ov").textContent=p;
+ const x=cur,over=x.bn=="Overload"||x.WPI>50;
+ const gain=over?p/10*3:p/10*1;
+ const nOE=Math.min(100,x.OE+gain),nBR=Math.max(0,x.BR-p*.35),otNew=x.o*(1-p/100),hNew=x.h-(x.o-otNew)*.8;
+ document.getElementById("wi").innerHTML=`<table style="min-width:0;margin-top:8px"><tr><th></th><th>Now</th><th>After</th></tr>
+ <tr><td>Overtime</td><td>${x.o} h</td><td>${otNew.toFixed(1)} h</td></tr>
+ <tr><td>Weekly hours</td><td>${x.h} h</td><td>${hNew.toFixed(1)} h</td></tr>
+ <tr><td>Output efficiency</td><td>${x.OE.toFixed(0)}</td><td>${nOE.toFixed(0)}</td></tr>
+ <tr><td>Burnout risk</td><td>${x.BR.toFixed(0)}</td><td>${nBR.toFixed(0)}</td></tr></table>
+ <p class="mu">Estimates from the agent’s rule-based gain model, not a guarantee.</p>`}
+tb.addEventListener("click",e=>{const t=e.target.closest("tr.t");if(t)show(T.find(x=>x.n==t.dataset.n))});
+document.getElementById("sl").oninput=upd;
+const A={
+ risk:()=>"Highest burnout risk:\n"+sorted.slice(0,3).map((x,i)=>`${i+1}. ${x.n} – burnout ${x.BR.toFixed(0)}, ${x.h} h/week, ${x.o} h overtime, engagement ${x.e}/10`).join("\n"),
+ bn:()=>{const x=sorted[0];return `Top bottleneck: ${x.n} (${x.bn}).\nIt works ${x.h} h/week with ${x.o} h overtime, yet completes only ${x.tc}% of tasks, so output per hour is the lowest. More hours are not helping – workload and capacity need rebalancing.`},
+ plan:()=>{const hi=sorted.filter(x=>x.lv!="lo").slice(0,3);return "Action plan:\n"+hi.map((x,i)=>`${i+1}. ${x.n}: ${x.iv[0]}; ${x.iv[1]||""}`).join("\n")+"\nReview scores again after 4 weeks."}
+};
+document.querySelectorAll("button[data-q]").forEach(b=>b.onclick=()=>document.getElementById("agent").textContent=A[b.dataset.q]());
+show(sorted[0]);
+</script></body></html>
